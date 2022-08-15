@@ -1,0 +1,26 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-geoatlesserverless-dev-192346-authRole",
+      "UnauthRoleArn": "arn:aws:iam::606012214439:role/amplify-geoatlesserverless-dev-192346-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::606012214439:role/amplify-geoatlesserverless-dev-192346-authRole",
+      "Region": "eu-west-1",
+      "DeploymentBucketName": "amplify-geoatlesserverless-dev-192346-deployment",
+      "UnauthRoleName": "amplify-geoatlesserverless-dev-192346-unauthRole",
+      "StackName": "amplify-geoatlesserverless-dev-192346",
+      "StackId": "arn:aws:cloudformation:eu-west-1:606012214439:stack/amplify-geoatlesserverless-dev-192346/da8acb60-1bf5-11ed-9886-0698d60b481b",
+      "AmplifyAppId": "df7aop33t3gtd"
+    },
+    "categories": {
+      "auth": {
+        "geoatlesserverless2e5ae842": {}
+      },
+      "function": {
+        "geoatlesmypostions": {
+          "deploymentBucketName": "amplify-geoatlesserverless-dev-192346-deployment",
+          "s3Key": "amplify-builds/geoatlesmypostions-593430616c6479775141-build.zip"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "paths": {
+    "/mypositions": {
+      "name": "/mypositions",
+      "lambdaFunction": "geoatlesmypostions",
+      "permissions": {
+        "setting": "open"
+      }
+    }
+  }
+}
