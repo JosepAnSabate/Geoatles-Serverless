@@ -26,6 +26,7 @@ function Position (user){
           paddingBottom: "1rem",
         }}
       >
+        <Link to="/home">Home</Link> 
         <Link to="/about">About</Link> 
       </nav>
       <h3>Position</h3>
