@@ -50,8 +50,12 @@ body {
     margin: 8px;
 }
 .upload-icon:hover .font-upload {
-    color: rgb(161, 82, 82);
-  }
+    color: rgb(24, 156, 44);
+}
+
+.font-upload-logo:hover{
+    color: rgb(24, 156, 44);
+}
 
 .sign-out{
     color: white;
@@ -68,3 +72,4 @@ body {
 .text-nav{
     font-size: 1.15rem;
 }
+

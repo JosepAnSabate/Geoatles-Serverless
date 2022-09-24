@@ -1,6 +1,6 @@
 import React from 'react';
-import { Link } from "react-router-dom";
 import { Auth } from 'aws-amplify';
+
 
 
 function Position (user){
@@ -10,30 +10,11 @@ function Position (user){
         console.log('user email = ' + userFromAuth.attributes.email);
       });
 
-    async function signOut() {
-        try {
-            await Auth.signOut();
-        } catch (error) {
-            console.log('error signing out: ', error);
-        }
-    }
-
     return (
-        <>
-      <nav
-        style={{
-          borderBottom: "solid 1px",
-          paddingBottom: "1rem",
-        }}
-      >
-        <Link to="/home">Home</Link> 
-        <Link to="/about">About</Link> 
-      </nav>
+      <>
       <h3>Position</h3>
-      <h1>Hello {user.userdata.username}</h1>
-     
-      <button onClick={signOut}>Sign out</button> 
-    </>
+      <h2>Hello {user.userdata.username}</h2>
+      </>
     )
     
 }

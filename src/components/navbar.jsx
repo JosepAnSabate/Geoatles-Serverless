@@ -19,15 +19,17 @@ export default function Navbar() {
     return (
     <nav className="nav">
         <div className="upload-icon">
-        <Link to="/" className="site-title">
+        <Link to="/" className="site-title font-upload-logo">
             <FontAwesomeIcon 
                 icon={faMapLocation} 
                 size="lg"
                 className="font-upload" />
+                GeoAtles
         </Link>
         </div>
         <ul>
             <CustomLink to="/about" className="text-nav">About</CustomLink> 
+            <CustomLink to="/create_position" className="text-nav">Nova Posició</CustomLink> 
             <CustomLink to="/position" className="text-nav">Position</CustomLink> 
             <button className="sign-out text-nav" onClick={signOut}>Tanca Sessió</button>
         </ul>

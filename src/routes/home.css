@@ -1,0 +1,9 @@
+.leaflet-container {
+    width: 90%;
+    height: 90vh;
+} 
+
+/* leaflet draw */
+.sr-only {
+    display: none;
+  }
