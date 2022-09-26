@@ -22,8 +22,8 @@ function CreatePosition (){
 
     AWS.config.update(
         {
-        accessKeyId: 'AKIAY2GJERST42VBBM6G',
-        secretAccessKey: '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', 
+        accessKeyId: '',
+        secretAccessKey: '', 
         region: 'eu-west-1'
     })
 

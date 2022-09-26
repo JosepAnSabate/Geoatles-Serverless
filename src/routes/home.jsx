@@ -77,6 +77,7 @@ function Home (user){
 
     /// POST ///
     const [mapPoint, setMapPoint] = useState([]);
+    
     const _onCreated = (e) => {
       console.log('created', e);
       console.log('uuuu');
