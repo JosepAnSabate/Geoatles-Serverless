@@ -17,30 +17,42 @@ function CreatePosition (){
 
     //https://javascript.plainenglish.io/how-to-upload-files-to-aws-s3-in-react-591e533d615e
 
-    const S3_BUCKET ='geoatles-serverless-images';
-    const REGION ='eu-west-1';
 
     AWS.config.update(
         {
-        accessKeyId: '',
-        secretAccessKey: '', 
+        accessKeyId: process.env.ACCESS_KEY_ID,
+        secretAccessKey: process.env.SECRET_ACCESS_KEY, 
         region: 'eu-west-1'
     })
 
+    const myBucket = new AWS.S3({
+        params: { Bucket: process.env.S3_BUCKET_IMG},
+        region: 'eu-west-1',
+    })
 
     const initialFormData = {
         title: '',
         description: '',
+        urlImg: '',
       };
     
     const [formData, setFormData] = useState(initialFormData);
     const [formSuccess, setFormSuccess] = useState('');
     const [formErrors, setFormErrors] = useState([]);
 
+    // S3
+    const [selectedFile, setSelectedFile] = useState(null);
+
+    const handleFileInput = (e) => {
+        setSelectedFile(e.target.files[0]);
+        formData.urlImg = e.target.files[0].name;
+    }
+
+    console.log('selectedFile', selectedFile);
     // for redirecting to the home page
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = async (e, file) => {
 
       // form:  https://medium.com/weekly-webtips/a-complete-guide-to-react-forms-15fa079c6177 
         e.preventDefault();
@@ -48,7 +60,7 @@ function CreatePosition (){
         try {
           // Send POST request
           //await axios.post('http://localhost:5000/api/v1/person', formData);
-          
+          console.log('formData', formData);
           const date = new Date()
           const day = date.getDate();
           const month = date.getMonth() + 1; // getMonth() returns month from 0 to 11
@@ -56,10 +68,8 @@ function CreatePosition (){
           formData.date = `${day}/${month}/${year}`; 
           const user = (await Auth.currentAuthenticatedUser())["attributes"]["sub"];
           formData.userId = user;
-          formData.urlImg = 't-1.amazonaws.com';
 
-          //console.log('formData', formData);
-          //console.log('ki soc', user);
+          console.log('urlimg', formData.urlImg); 
 
           const response = await post(
             `https://01djeb5cph.execute-api.eu-west-1.amazonaws.com/dev/post_location_py`,
@@ -67,15 +77,27 @@ function CreatePosition (){
           );
           
           //const data = await response.data;
-          //console.log('response', response);
           //console.log('data', data);  
-          
+          console.log('API_GW_URL', process.env.API_GW_URL);
+          // S3
+          const params = {
+            ACL: 'public-read',
+            Body: file,
+            Bucket: 'geoatles-serverless-images',
+            Key: formData.urlImg,
+          };
+
+          myBucket.putObject(params)
+             .send((err) => {
+                 if (err) console.log(err)
+             })
+
           // HTTP req successful
           setFormSuccess('Data received correctly');
     
           // Reset form data
           setFormData(initialFormData);
-          navigate('/');
+          //navigate('/');
           //return data;
         } catch (err) {
           handleErrors(err);
@@ -142,7 +164,7 @@ function CreatePosition (){
         /> 
         <br />
         <label>Imatge</label>
-        {/* <input type="file" onChange={() => handleSubmit()  }></input> */}
+        <input type="file" name="file"  onChange={handleFileInput}></input>
         <br />
         <label className="label-forms">Coordenades</label>
                 <input  
@@ -164,7 +186,7 @@ function CreatePosition (){
                     required 
                 /> 
                 
-        <button onSubmit={handleChange}>Afegeix Posició</button>
+        <button onSubmit={() => handleChange(selectedFile)}>Afegeix Posició</button>
       </form>
       </div>
       </>
