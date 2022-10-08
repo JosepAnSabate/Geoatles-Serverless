@@ -1,4 +1,6 @@
 import React from 'react';
+import {useNavigate} from 'react-router-dom';
+import * as AWS from 'aws-sdk'
 import {MapContainer, TileLayer, Marker, Popup, FeatureGroup} from 'react-leaflet';
 import {EditControl} from 'react-leaflet-draw';
 //import {Icon} from 'leaflet';
@@ -9,30 +11,44 @@ import osm from '../osm-provider';
 import L from 'leaflet';
 import "leaflet-draw/dist/leaflet.draw.css"
 
-
-import { mapForm } from '../utils/mapForm.js';
-
+import post from "../clients/HttpClient";
 // hooks
 import fetchPositions from '../hooks/fetchPositions.jsx';
 import useGeoLocation from '../hooks/useGeoLocation';
 
 // utils
-import {buildGeoJSON} from '../utils/buildGeoJson.js';
+//import { mapForm } from '../utils/mapForm.js';
+import { AlertSuccess } from '../utils/AlertSuccess';
+//import {buildGeoJSON} from '../utils/buildGeoJson.js';
+
+
 
 const markerIcon = new L.icon({
   iconUrl: require('../img/location.png'),
   iconSize: [40, 41],
 })
 
+const mapForm = `
+      <Popup>
+      <form onSubmit={handleSubmit} className="form">
+      <label>Títol</label>
+      <input  
+          type="text" 
+          name="title" 
+          className="input"
+          
+      /> 
+      <br /> 
+      <button onSubmit={handleChange}>Afegeix Posició</button>
+      </form>
+      </Popup>
+      `
 
 function Home (user){
     //console.log('user',user.userdata.username);
     const userId = user.userdata.username
     const [positions, setPositions] = useState("");
     const [activePosition, setactivePosition] = useState(null);
-
-     
-
 
     useEffect(() => {
       fetchPositions(userId)
@@ -70,12 +86,140 @@ function Home (user){
     // user location
     const location = useGeoLocation();
 
-
     //console.log('items', positions.Items);
     //console.log('items 0', positions.Items[0].location);
     console.log('data', data);
 
     /// POST ///
+    //https://javascript.plainenglish.io/how-to-upload-files-to-aws-s3-in-react-591e533d615e
+    const accessKeyId = process.env.REACT_APP_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.REACT_APP_SECRETACCESSKEY;
+    const s3BucketImg = process.env.REACT_APP_S3_BUCKET_IMG;
+    
+    AWS.config.update(
+        {
+        accessKeyId: accessKeyId,
+        secretAccessKey: secretAccessKey, 
+        region: 'eu-west-1'
+    })
+
+    const myBucket = new AWS.S3({
+        params: { Bucket: s3BucketImg},
+        region: 'eu-west-1',
+    })
+
+    const initialFormData = {
+        title: '',
+        description: '',
+        urlImg: '',
+      };
+
+    const [formData, setFormData] = useState(initialFormData);
+    const [formSuccess, setFormSuccess] = useState('');
+    const [formErrors, setFormErrors] = useState([]);
+
+    // S3
+    const [selectedFile, setSelectedFile] = useState(null);
+
+    const handleFileInput = (e) => {
+        setSelectedFile(e.target.files[0]);
+        formData.urlImg = e.target.files[0].name;
+    }
+    
+    //console.log('selectedFile', selectedFile);
+    // for redirecting to the home page
+    const navigate = useNavigate();
+
+    const handleSubmit = async (e) => {
+        // form:  https://medium.com/weekly-webtips/a-complete-guide-to-react-forms-15fa079c6177 
+        e.preventDefault();
+    
+        try {
+          // Send POST request
+          //await axios.post('http://localhost:5000/api/v1/person', formData);
+          //console.log('formData', formData);
+          const date = new Date()
+          const day = date.getDate();
+          const month = date.getMonth() + 1; // getMonth() returns month from 0 to 11
+          const year = date.getFullYear();
+          formData.date = `${day}/${month}/${year}`; 
+          formData.userId = userId;
+          formData.lat = mapPoint.lat;
+          formData.long = mapPoint.lng;
+
+          // test
+          formData.title = 'test';
+          formData.description = 'test';
+          formData.urlImg = '';
+
+          console.log('formData', formData);
+          const response = await post(
+            `https://01djeb5cph.execute-api.eu-west-1.amazonaws.com/dev/post_location_py`,
+            JSON.stringify(formData)
+          ).catch((error) => {  
+            setFormSuccess('Format de les coordenades no vàlid.');
+          });
+
+          
+          const data = await response.data;
+          //console.log('data', data);  
+          
+          //console.log('file', selectedFile); 
+          // S3 if image is uploaded
+          if (formData.urlImg !== '') {
+            const params = {
+              ACL: 'public-read',
+              Body: selectedFile,
+              Bucket: 'geoatles-serverless-images',
+              Key: formData.urlImg,
+            };
+            //console.log('params', params);
+            myBucket.putObject(params)
+              .send((err) => {
+                  if (err) console.log(err)
+              })
+          }
+
+          // HTTP req successful
+          setFormSuccess('Data received correctly');
+    
+          // Reset form data
+          setFormData(initialFormData);
+          //navigate('/');
+          //return data;
+        } catch (err) {
+          handleErrors(err);
+        }
+      };
+    
+      const handleErrors = (err) => {
+        if (err.response.data && err.response.data.errors) {
+          // Handle validation errors
+          const { errors } = err.response.data;
+    
+          let errorMsg = [];
+          for (let error of errors) {
+            const { msg } = error;
+    
+            errorMsg.push(msg);
+          }
+    
+          setFormErrors(errorMsg);
+        } else {
+          // Handle generic error
+          setFormErrors(['Oops, there was an error!']);
+        }
+      };
+    
+      const  handleChange = (e) => {
+        setFormData({
+          ...formData,
+          [e.target.name]: e.target.value,
+        });
+        setFormErrors([]);
+        setFormSuccess('');
+      };
+    // react leaflet post
     const [mapPoint, setMapPoint] = useState([]);
     
     const _onCreated = (e) => {
@@ -93,8 +237,6 @@ function Home (user){
         {id: _leaflet_id, latlngs: layer._latlng}
       ]);
 
-      
-      
       try {
         layer.bindPopup(mapForm,{
           keepInView: true,
@@ -131,6 +273,7 @@ function Home (user){
           <Marker position={[location.coordinates.lat, location.coordinates.lng]} icon={markerIcon}>
             <Popup>
               <p>La Meva Posició</p>
+              <p>Latitud: {location.coordinates.lat} Longitud:{location.coordinates.lng}</p>
             </Popup>
           </Marker>
         )}

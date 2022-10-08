@@ -1,6 +1,6 @@
 export const mapForm = `
       <Popup>
-      <form  className="form">
+      <form onSubmit={handleSubmit} className="form">
       <label>Títol</label>
       <input  
           type="text" 
@@ -9,7 +9,7 @@ export const mapForm = `
           
       /> 
       <br /> 
-      <button>Afegeix Posició</button>
+      <button onSubmit={handleChange}>Afegeix Posició</button>
       </form>
       </Popup>
       `

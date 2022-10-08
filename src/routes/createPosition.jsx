@@ -2,12 +2,13 @@ import React, {useState} from 'react';
 import { Auth } from 'aws-amplify';
 import "./createPosition.css";
 import * as AWS from 'aws-sdk'
-import { ConfigurationOptions, EnvironmentCredentials } from 'aws-sdk'
-import {Link, Routes, Route, useNavigate} from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 
 import post from "../clients/HttpClient";
 import { AlertError } from '../utils/AlertError';
 import { AlertSuccess } from '../utils/AlertSuccess';
+
+
 
 function CreatePosition (){
     Auth.currentAuthenticatedUser().then((userFromAuth) => {
@@ -16,17 +17,19 @@ function CreatePosition (){
     });
 
     //https://javascript.plainenglish.io/how-to-upload-files-to-aws-s3-in-react-591e533d615e
-
-
+    const accessKeyId = process.env.REACT_APP_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.REACT_APP_SECRETACCESSKEY;
+    const s3BucketImg = process.env.REACT_APP_S3_BUCKET_IMG;
+    
     AWS.config.update(
         {
-        accessKeyId: process.env.ACCESS_KEY_ID,
-        secretAccessKey: process.env.SECRET_ACCESS_KEY, 
+        accessKeyId: accessKeyId,
+        secretAccessKey: secretAccessKey, 
         region: 'eu-west-1'
     })
 
     const myBucket = new AWS.S3({
-        params: { Bucket: process.env.S3_BUCKET_IMG},
+        params: { Bucket: s3BucketImg},
         region: 'eu-west-1',
     })
 
@@ -47,20 +50,19 @@ function CreatePosition (){
         setSelectedFile(e.target.files[0]);
         formData.urlImg = e.target.files[0].name;
     }
-
-    console.log('selectedFile', selectedFile);
+    
+    //console.log('selectedFile', selectedFile);
     // for redirecting to the home page
     const navigate = useNavigate();
 
-    const handleSubmit = async (e, file) => {
-
-      // form:  https://medium.com/weekly-webtips/a-complete-guide-to-react-forms-15fa079c6177 
+    const handleSubmit = async (e) => {
+        // form:  https://medium.com/weekly-webtips/a-complete-guide-to-react-forms-15fa079c6177 
         e.preventDefault();
     
         try {
           // Send POST request
           //await axios.post('http://localhost:5000/api/v1/person', formData);
-          console.log('formData', formData);
+          //console.log('formData', formData);
           const date = new Date()
           const day = date.getDate();
           const month = date.getMonth() + 1; // getMonth() returns month from 0 to 11
@@ -69,35 +71,41 @@ function CreatePosition (){
           const user = (await Auth.currentAuthenticatedUser())["attributes"]["sub"];
           formData.userId = user;
 
-          console.log('urlimg', formData.urlImg); 
+           
 
           const response = await post(
             `https://01djeb5cph.execute-api.eu-west-1.amazonaws.com/dev/post_location_py`,
             JSON.stringify(formData)
-          );
-          
-          //const data = await response.data;
-          //console.log('data', data);  
-          console.log('API_GW_URL', process.env.API_GW_URL);
-          // S3
-          const params = {
-            ACL: 'public-read',
-            Body: file,
-            Bucket: 'geoatles-serverless-images',
-            Key: formData.urlImg,
-          };
+          ).catch((error) => {  
+            setFormSuccess('Format de les coordenades no vàlid.');
+          });
 
-          myBucket.putObject(params)
-             .send((err) => {
-                 if (err) console.log(err)
-             })
+          
+          const data = await response.data;
+          //console.log('data', data);  
+          
+          //console.log('file', selectedFile); 
+          // S3 if image is uploaded
+          if (formData.urlImg !== '') {
+            const params = {
+              ACL: 'public-read',
+              Body: selectedFile,
+              Bucket: 'geoatles-serverless-images',
+              Key: formData.urlImg,
+            };
+            //console.log('params', params);
+            myBucket.putObject(params)
+              .send((err) => {
+                  if (err) console.log(err)
+              })
+          }
 
           // HTTP req successful
           setFormSuccess('Data received correctly');
     
           // Reset form data
           setFormData(initialFormData);
-          //navigate('/');
+          navigate('/');
           //return data;
         } catch (err) {
           handleErrors(err);
@@ -131,8 +139,6 @@ function CreatePosition (){
         setFormErrors([]);
         setFormSuccess('');
       };
-    
-    
 
     return (
       <>
@@ -140,7 +146,7 @@ function CreatePosition (){
       <div className='create'>
       <AlertSuccess success={formSuccess} />
       
-      <h3>CreatePosition</h3>
+      <h3>Crea una Posició</h3>
       <br />
       <form onSubmit={handleSubmit} className="form">
         <label>Títol</label>
@@ -186,7 +192,7 @@ function CreatePosition (){
                     required 
                 /> 
                 
-        <button onSubmit={() => handleChange(selectedFile)}>Afegeix Posició</button>
+        <button onSubmit={() => handleChange()}>Afegeix Posició</button>
       </form>
       </div>
       </>
