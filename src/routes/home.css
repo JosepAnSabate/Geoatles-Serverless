@@ -7,3 +7,42 @@
 .sr-only {
     display: none;
   }
+
+/* form */
+.create-form {
+    max-width: 400px;
+    margin: 0 auto;
+    text-align: center;
+    background-color: white;
+}
+.form{
+    margin: 12px;
+}
+.button-form {
+    margin-bottom: 15px;
+}
+.create-form label {
+    text-align: left;
+    display: block;
+}
+.create-form h2 {
+    font-size: 20px;
+    color: #f1356d;
+    margin-bottom: 30px;
+}
+.create-form input, .create-form textarea, .create-form select {
+    width: 100%;
+    padding: 6px 10px;
+    margin: 10px 0;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+    display: block;
+}
+.button-form {
+    background: #f1356d;
+    color: #fff;
+    border: 0;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+}

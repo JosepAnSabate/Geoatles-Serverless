@@ -1,5 +1,6 @@
 import React from 'react';
 import {useNavigate} from 'react-router-dom';
+import ReactDOMServer from "react-dom/server";
 import * as AWS from 'aws-sdk'
 import {MapContainer, TileLayer, Marker, Popup, FeatureGroup} from 'react-leaflet';
 import {EditControl} from 'react-leaflet-draw';
@@ -10,6 +11,9 @@ import "./home.css";
 import osm from '../osm-provider';
 import L from 'leaflet';
 import "leaflet-draw/dist/leaflet.draw.css"
+
+import { MuiThemeProvider } from '@material-ui/core/styles';
+
 
 import post from "../clients/HttpClient";
 // hooks
@@ -28,21 +32,6 @@ const markerIcon = new L.icon({
   iconSize: [40, 41],
 })
 
-const mapForm = `
-      <Popup>
-      <form onSubmit={handleSubmit} className="form">
-      <label>Títol</label>
-      <input  
-          type="text" 
-          name="title" 
-          className="input"
-          
-      /> 
-      <br /> 
-      <button onSubmit={handleChange}>Afegeix Posició</button>
-      </form>
-      </Popup>
-      `
 
 function Home (user){
     //console.log('user',user.userdata.username);
@@ -118,6 +107,9 @@ function Home (user){
     const [formSuccess, setFormSuccess] = useState('');
     const [formErrors, setFormErrors] = useState([]);
 
+    // show or not form
+    const [showForm, setShowForm] = useState();
+
     // S3
     const [selectedFile, setSelectedFile] = useState(null);
 
@@ -127,6 +119,8 @@ function Home (user){
     }
     
     //console.log('selectedFile', selectedFile);
+    
+    
     // for redirecting to the home page
     const navigate = useNavigate();
 
@@ -144,14 +138,12 @@ function Home (user){
           const year = date.getFullYear();
           formData.date = `${day}/${month}/${year}`; 
           formData.userId = userId;
-          formData.lat = mapPoint.lat;
-          formData.long = mapPoint.lng;
+          formData.lat = mapPoint.latlngs.lat.toString();
+          formData.long = mapPoint.latlngs.lng.toString();
 
-          // test
-          formData.title = 'test';
-          formData.description = 'test';
-          formData.urlImg = '';
-
+          // test borrar 
+          //formData.urlImg = '';
+ 
           console.log('formData', formData);
           const response = await post(
             `https://01djeb5cph.execute-api.eu-west-1.amazonaws.com/dev/post_location_py`,
@@ -162,7 +154,7 @@ function Home (user){
 
           
           const data = await response.data;
-          //console.log('data', data);  
+          console.log('dataf', data);  
           
           //console.log('file', selectedFile); 
           // S3 if image is uploaded
@@ -185,66 +177,75 @@ function Home (user){
     
           // Reset form data
           setFormData(initialFormData);
-          //navigate('/');
+          
+          setTimeout(window.location.reload(false), 3000);
           //return data;
         } catch (err) {
           handleErrors(err);
         }
       };
     
-      const handleErrors = (err) => {
-        if (err.response.data && err.response.data.errors) {
-          // Handle validation errors
-          const { errors } = err.response.data;
-    
-          let errorMsg = [];
-          for (let error of errors) {
-            const { msg } = error;
-    
-            errorMsg.push(msg);
-          }
-    
-          setFormErrors(errorMsg);
-        } else {
-          // Handle generic error
-          setFormErrors(['Oops, there was an error!']);
+    const handleErrors = (err) => {
+      if (err.response.data && err.response.data.errors) {
+        // Handle validation errors
+        const { errors } = err.response.data;
+  
+        let errorMsg = [];
+        for (let error of errors) {
+          const { msg } = error;
+  
+          errorMsg.push(msg);
         }
-      };
+  
+        setFormErrors(errorMsg);
+      } else {
+        // Handle generic error
+        setFormErrors(['Oops, there was an error!']);
+      }
+    };
     
-      const  handleChange = (e) => {
-        setFormData({
-          ...formData,
-          [e.target.name]: e.target.value,
-        });
-        setFormErrors([]);
-        setFormSuccess('');
-      };
+    const  handleChange = (e) => {
+      console.log(formData)
+      setFormData({
+        ...formData,
+        [e.target.name]: e.target.value,
+      });
+      setFormErrors([]);
+      setFormSuccess('');
+    };
+
+    const handleTest = async (e) => {
+      e.preventDefault();
+      console.log('test');
+    }
+    
+
     // react leaflet post
     const [mapPoint, setMapPoint] = useState([]);
     
     const _onCreated = (e) => {
       console.log('created', e);
-      console.log('uuuu');
       const {layerType, layer} = e;
 
-    
-      
       const {_leaflet_id } = layer;
       console.log('ltlng', layer._latlng);
       const {lat, lng} = layer._latlng;
-      setMapPoint(layers => [
-        ...layers,
-        {id: _leaflet_id, latlngs: layer._latlng}
-      ]);
-
-      try {
-        layer.bindPopup(mapForm,{
-          keepInView: true,
-          closeButton: false
-          }).openPopup();
-      } catch (error) {
-        console.error(error);
-      }
+      // setMapPoint(layers => [...layers, {id: _leaflet_id, latlngs: layer._latlng} ]);
+      setMapPoint({id: _leaflet_id, latlngs: layer._latlng});
+      
+      formData.lat = lat.toString();
+      console.log('long', lng);
+      formData.long = lng.toString();
+      setShowForm(true);
+      // try {
+      //   layer.bindPopup(
+      //     mapForm,{
+      //     keepInView: true,
+      //     closeButton: false
+      //     }).openPopup();
+      // } catch (error) {
+      //   console.error(error);
+      // }
     }
 
     const _onEdited = (e) => {
@@ -253,12 +254,54 @@ function Home (user){
 
     const _onDeleted = (e) => {
       console.log('deleted', e);
+      setShowForm(false);
     }
+
+
 
     return (
     <>
       <h2>Hello {user.userdata.username}</h2>
-      <pre className="text-left">{JSON.stringify(mapPoint, 0, 2)}</pre>
+      {showForm == true && 
+        <div className="create-form">
+          <form onSubmit={handleSubmit} className="form">
+          <button type="button" onClick={_onDeleted} style={{float: "right", paddingTop: "8px"}} className="btn-close" aria-label="Close"></button>
+            <label style={{paddingTop: "8px"}}>Títol</label>  
+            <input
+              type="text"
+              name="title"  
+              className="input"
+              value={formData.title}
+              onChange={handleChange}
+            />
+            <br />
+            <label>Descripció</label>
+            <input
+              type="text"
+              name="description"
+              className="input"
+              value={formData.description}
+              onChange={handleChange}
+            />
+            <br />
+            <label>Imatge</label>
+            <input
+              type="file"
+              name="urlImg"
+              className="input"
+              onChange={handleFileInput}
+             // onChange={handleFileChange}
+            />
+            <br />
+            <label>Lat: {mapPoint.latlngs.lat.toFixed(5)}, Long: {mapPoint.latlngs.lng.toFixed(5)}</label>
+            
+            <br />
+            <button className='button-form' onSubmit={() => handleChange()}>Afegeix Posició</button>
+
+          </form>
+        </div>
+      }
+      {/* <pre className="text-left">{JSON.stringify(mapPoint, 0, 2)}</pre> */}
       <MapContainer center={center}
          zoom={8} scrollWheelZoom={false}>
         {/* osm leaflet default */}
