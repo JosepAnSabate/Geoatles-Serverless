@@ -25,7 +25,7 @@ function App({ user }) {
     <Routes>
       <Route path="/" element={<Home  userdata={user}  />} />
       <Route path="/about" element={<About   />} />
-      <Route path="/position" element={<Position   userdata={user} />} />
+      <Route path="/position/:id" element={<Position   userdata={user} />} />
       <Route path="/create_position" element={<CreatePosition />} />
       {/* error page */}
       <Route path="*" element={<Error   />} />

@@ -2,7 +2,8 @@ import React from 'react';
 import {useNavigate} from 'react-router-dom';
 import ReactDOMServer from "react-dom/server";
 import * as AWS from 'aws-sdk'
-import {MapContainer, TileLayer, Marker, Popup, FeatureGroup} from 'react-leaflet';
+import { uploadFile } from 'react-s3';
+import {MapContainer, TileLayer, Marker, Popup, FeatureGroup, useMapEvents} from 'react-leaflet';
 import {EditControl} from 'react-leaflet-draw';
 //import {Icon} from 'leaflet';
 import { useState, useEffect } from 'react';
@@ -11,9 +12,6 @@ import "./home.css";
 import osm from '../osm-provider';
 import L from 'leaflet';
 import "leaflet-draw/dist/leaflet.draw.css"
-
-import { MuiThemeProvider } from '@material-ui/core/styles';
-
 
 import post from "../clients/HttpClient";
 // hooks
@@ -37,11 +35,11 @@ function Home (user){
     //console.log('user',user.userdata.username);
     const userId = user.userdata.username
     const [positions, setPositions] = useState("");
-    const [activePosition, setactivePosition] = useState(null);
 
     useEffect(() => {
       fetchPositions(userId)
         .then((data) => { setPositions(data); })
+        //.then(console.log('fetched'))
     }, []);
     
     // building the geogson a partir de dynamodb data
@@ -77,7 +75,7 @@ function Home (user){
 
     //console.log('items', positions.Items);
     //console.log('items 0', positions.Items[0].location);
-    console.log('data', data);
+    //console.log('data', data);
 
     /// POST ///
     //https://javascript.plainenglish.io/how-to-upload-files-to-aws-s3-in-react-591e533d615e
@@ -96,7 +94,7 @@ function Home (user){
         params: { Bucket: s3BucketImg},
         region: 'eu-west-1',
     })
-
+    
     const initialFormData = {
         title: '',
         description: '',
@@ -115,7 +113,7 @@ function Home (user){
 
     const handleFileInput = (e) => {
         setSelectedFile(e.target.files[0]);
-        formData.urlImg = e.target.files[0].name;
+        formData.urlImg = userId + '/' + e.target.files[0].name;
     }
     
     //console.log('selectedFile', selectedFile);
@@ -151,8 +149,6 @@ function Home (user){
           ).catch((error) => {  
             setFormSuccess('Format de les coordenades no vàlid.');
           });
-
-          
           const data = await response.data;
           console.log('dataf', data);  
           
@@ -165,11 +161,12 @@ function Home (user){
               Bucket: 'geoatles-serverless-images',
               Key: formData.urlImg,
             };
-            //console.log('params', params);
+            console.log('params', params);
             myBucket.putObject(params)
               .send((err) => {
                   if (err) console.log(err)
-              })
+              });
+            
           }
 
           // HTTP req successful
@@ -178,7 +175,9 @@ function Home (user){
           // Reset form data
           setFormData(initialFormData);
           
-          setTimeout(window.location.reload(false), 3000);
+          setShowForm(false);
+          navigate('/about');
+          //setTimeout(window.location.reload(false), 2000);
           //return data;
         } catch (err) {
           handleErrors(err);
@@ -213,11 +212,6 @@ function Home (user){
       setFormErrors([]);
       setFormSuccess('');
     };
-
-    const handleTest = async (e) => {
-      e.preventDefault();
-      console.log('test');
-    }
     
 
     // react leaflet post
@@ -257,12 +251,24 @@ function Home (user){
       setShowForm(false);
     }
 
-
+    // track coordinates
+    const [mousePosition, setMousePosition] = useState({});
+    function MyComponent() {
+      const map = useMapEvents({
+        mousemove: (e) => {
+          const { lat, lng } = e.latlng;
+          //console.log('latlng', lat, lng);
+          setMousePosition({lat,lng});
+        }
+      });
+      return null;
+    }
+    //console.log('mousePosition', mousePosition);
 
     return (
     <>
-      <h2>Hello {user.userdata.username}</h2>
-      {showForm == true && 
+      {/* <h2>Hello {user.userdata.username}</h2> */}
+      {showForm === true && 
         <div className="create-form">
           <form onSubmit={handleSubmit} className="form">
           <button type="button" onClick={_onDeleted} style={{float: "right", paddingTop: "8px"}} className="btn-close" aria-label="Close"></button>
@@ -276,10 +282,11 @@ function Home (user){
             />
             <br />
             <label>Descripció</label>
-            <input
+            <textarea
               type="text"
               name="description"
               className="input"
+              rows="2"
               value={formData.description}
               onChange={handleChange}
             />
@@ -294,7 +301,6 @@ function Home (user){
             />
             <br />
             <label>Lat: {mapPoint.latlngs.lat.toFixed(5)}, Long: {mapPoint.latlngs.lng.toFixed(5)}</label>
-            
             <br />
             <button className='button-form' onSubmit={() => handleChange()}>Afegeix Posició</button>
 
@@ -303,7 +309,7 @@ function Home (user){
       }
       {/* <pre className="text-left">{JSON.stringify(mapPoint, 0, 2)}</pre> */}
       <MapContainer center={center}
-         zoom={8} scrollWheelZoom={false}>
+         zoom={8} scrollWheelZoom={true}>
         {/* osm leaflet default */}
         {/* <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -343,32 +349,33 @@ function Home (user){
           <Popup>
           <div>
             <h2>{position.properties.title}</h2>
-            <p>{position.properties.description}</p>
             <img src={position.properties.urlImg} width="320"/> 
+            <p>{position.properties.description}</p>
             <p>{position.properties.date}</p>
-            <p>Lang: {position.properties.lat}, Long: {position.properties.long}</p>
+            <p>Lat: {position.properties.lat}, Long: {position.properties.long}</p>
             
           </div>
         </Popup>
         </Marker>
           ))
         }
-        {activePosition && (
-        <Popup
-          position={[
-            activePosition.geometry.coordinates[1], 
-            activePosition.geometry.coordinates[0]
-          ]}
-          onClose={() => {
-            setactivePosition(null);
-          }}
-        >
-          <div>
-            <h2>hola</h2>
-          </div>
-        </Popup>)}
-        
+        <MyComponent />
       </MapContainer>
+      {"lat" in mousePosition && <> 
+      <p>Lat: {mousePosition.lat.toFixed(5)}, Long: {mousePosition.lng.toFixed(5)}</p><br /><br />
+      </>}
+
+      {location.loaded && !location.error && (
+          data.features.map(position => (
+          <div className='post-preview' key={position.properties.id}>
+            <a href={'/position/' + position.properties.id}><h2 className='post-title'>{position.properties.title}</h2></a>
+            <h3 className='post-subtitle'>{position.properties.description}</h3>
+            <p className='post-meta'>{position.properties.date}</p>
+            <hr />
+          </div>
+          
+            ))
+        )}
     </>
     )
     

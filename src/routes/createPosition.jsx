@@ -11,10 +11,8 @@ import { AlertSuccess } from '../utils/AlertSuccess';
 
 
 function CreatePosition (){
-    Auth.currentAuthenticatedUser().then((userFromAuth) => {
-        //console.log('user = ' + JSON.stringify(userFromAuth.attributes));
-        const userId = userFromAuth.attributes.sub;
-    });
+    
+    const userId = Auth.user.attributes.sub;
 
     //https://javascript.plainenglish.io/how-to-upload-files-to-aws-s3-in-react-591e533d615e
     const accessKeyId = process.env.REACT_APP_ACCESS_KEY_ID;
@@ -48,7 +46,7 @@ function CreatePosition (){
 
     const handleFileInput = (e) => {
         setSelectedFile(e.target.files[0]);
-        formData.urlImg = e.target.files[0].name;
+        formData.urlImg =  userId + '/'+ e.target.files[0].name;
     }
     
     //console.log('selectedFile', selectedFile);
@@ -91,7 +89,7 @@ function CreatePosition (){
               ACL: 'public-read',
               Body: selectedFile,
               Bucket: 'geoatles-serverless-images',
-              Key: formData.urlImg,
+              Key:  formData.urlImg,
             };
             //console.log('params', params);
             myBucket.putObject(params)
@@ -160,7 +158,8 @@ function CreatePosition (){
         /> 
         <br />
         <label>Descripció</label>
-        <input  
+        <textarea
+            rows="2"  
             type="text" 
             name="description" 
             className="input"

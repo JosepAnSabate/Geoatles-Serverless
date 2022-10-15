@@ -30,7 +30,6 @@ export default function Navbar() {
         <ul>
             <CustomLink to="/about" className="text-nav">About</CustomLink> 
             <CustomLink to="/create_position" className="text-nav">Nova Posició</CustomLink> 
-            <CustomLink to="/position" className="text-nav">Position</CustomLink> 
             <button className="sign-out text-nav" onClick={signOut}>Tanca Sessió</button>
         </ul>
     </nav>

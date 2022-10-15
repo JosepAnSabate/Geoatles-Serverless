@@ -1,6 +1,6 @@
 .leaflet-container {
-    width: 90%;
-    height: 90vh;
+    width: 100%;
+    height: 70vh;
 } 
 
 /* leaflet draw */
@@ -10,8 +10,18 @@
 
 /* form */
 .create-form {
+    position:absolute;
+    z-index: 1500;   
+    /* In order for z-index to work, you'll 
+    need to give the element a position:absolute or a 
+    position:relative property.   */
     max-width: 400px;
-    margin: 0 auto;
+    margin-left: auto;
+    margin-right: auto;
+    left: 0;
+    right: 0;
+    margin-top: 4%;
+    /* margin: 0 auto; */
     text-align: center;
     background-color: white;
 }
