@@ -8,11 +8,13 @@ import CreatePosition from './routes/createPosition';
 import Error from './routes/error';
 
 import Navbar from './components/navbar';
+import Footer from './components/footer';
 
 import {Amplify} from 'aws-amplify';
 import awsconfig from './aws-exports'
 import { withAuthenticator  } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 
 Amplify.configure(awsconfig);
@@ -21,6 +23,7 @@ function App({ user }) {
   
   return (
     <BrowserRouter>
+    <div style={{minHeight: '85vh'}}>
     <Navbar />
     <Routes>
       <Route path="/" element={<Home  userdata={user}  />} />
@@ -30,7 +33,8 @@ function App({ user }) {
       {/* error page */}
       <Route path="*" element={<Error   />} />
     </Routes>
-    <footer>Our footer</footer>
+    </div>
+    <Footer />
     </BrowserRouter>
   );
 }

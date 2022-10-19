@@ -56,3 +56,67 @@
     border-radius: 8px;
     cursor: pointer;
 }
+
+.coords-map{
+    display: block;
+    position: relative;
+    margin: 0px auto;
+    width: 40%;
+    min-width: 350px;
+    padding: 5px;
+    border: none;
+    border-radius: 7px;
+    font-size: 20px;
+    font-family: 'PT Serif', serif;
+    text-align: center;
+    color: #000;
+    /* background: #D6EAF8; */
+    margin-top: 7px;
+}
+
+.title-popup{
+    font-size: 2.5em;
+    font-weight: 500;
+    margin-bottom: 0;
+    text-align: center;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
+.descr-popup{
+    font-size: 1.4em;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+    font-weight: 600;
+}
+.date-popup{
+    font-size: 1.4em;
+    font-weight: 550;
+    text-align: right;
+    font-family: 'PT Serif', serif;
+}
+.coords-popup{
+    text-align: right;
+    font-family: 'PT Serif', serif;
+    margin-top: 16px;
+    font-size: 1.6em;
+    font-family: 'PT Serif', serif;
+    margin: 18px 0;
+}
+
+.menu{
+    margin-top: 18px;
+}
+
+.post-preview-img{
+    display: flex;
+    justify-content:space-between;
+}
+.post-meta{
+    text-align: right;
+}
+.post-subtitle{
+    margin-left: 30px;
+}
+.my-position{
+    font-size: 1.1rem;
+    font-family: 'PT Serif', serif;
+    text-align: center;
+}

@@ -1,16 +1,17 @@
 import React from 'react';
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, Link} from 'react-router-dom';
 import ReactDOMServer from "react-dom/server";
 import * as AWS from 'aws-sdk'
 import { uploadFile } from 'react-s3';
-import {MapContainer, TileLayer, Marker, Popup, FeatureGroup, useMapEvents} from 'react-leaflet';
+import {MapContainer, TileLayer, Marker, Popup, FeatureGroup, useMapEvents, LayersControl, useMap } from 'react-leaflet';
+import * as WMS from "leaflet.wms";
 import {EditControl} from 'react-leaflet-draw';
 //import {Icon} from 'leaflet';
 import { useState, useEffect } from 'react';
 import "./home.css";
 //import { layer } from '@fortawesome/fontawesome-svg-core';
 import osm from '../osm-provider';
-import L from 'leaflet';
+import * as L from 'leaflet';
 import "leaflet-draw/dist/leaflet.draw.css"
 
 import post from "../clients/HttpClient";
@@ -23,7 +24,7 @@ import useGeoLocation from '../hooks/useGeoLocation';
 import { AlertSuccess } from '../utils/AlertSuccess';
 //import {buildGeoJSON} from '../utils/buildGeoJson.js';
 
-
+const { BaseLayer } = LayersControl;
 
 const markerIcon = new L.icon({
   iconUrl: require('../img/location.png'),
@@ -114,18 +115,14 @@ function Home (user){
     const handleFileInput = (e) => {
         setSelectedFile(e.target.files[0]);
         formData.urlImg = userId + '/' + e.target.files[0].name;
-    }
-    
+    }    
     //console.log('selectedFile', selectedFile);
-    
-    
     // for redirecting to the home page
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         // form:  https://medium.com/weekly-webtips/a-complete-guide-to-react-forms-15fa079c6177 
         e.preventDefault();
-    
         try {
           // Send POST request
           //await axios.post('http://localhost:5000/api/v1/person', formData);
@@ -138,9 +135,6 @@ function Home (user){
           formData.userId = userId;
           formData.lat = mapPoint.latlngs.lat.toString();
           formData.long = mapPoint.latlngs.lng.toString();
-
-          // test borrar 
-          //formData.urlImg = '';
  
           console.log('formData', formData);
           const response = await post(
@@ -151,7 +145,7 @@ function Home (user){
           });
           const data = await response.data;
           console.log('dataf', data);  
-          
+          const direction = '/position/' + data.id;
           //console.log('file', selectedFile); 
           // S3 if image is uploaded
           if (formData.urlImg !== '') {
@@ -176,7 +170,7 @@ function Home (user){
           setFormData(initialFormData);
           
           setShowForm(false);
-          navigate('/about');
+          navigate(direction);
           //setTimeout(window.location.reload(false), 2000);
           //return data;
         } catch (err) {
@@ -212,11 +206,9 @@ function Home (user){
       setFormErrors([]);
       setFormSuccess('');
     };
-    
 
     // react leaflet post
     const [mapPoint, setMapPoint] = useState([]);
-    
     const _onCreated = (e) => {
       console.log('created', e);
       const {layerType, layer} = e;
@@ -265,6 +257,29 @@ function Home (user){
     }
     //console.log('mousePosition', mousePosition);
 
+    // wms
+    function GetFeatureInfoWms() {
+      const options = {
+        maxZoom: 7, // pèr a no mostrarse
+        transparent: true,
+        continuousWorld: true,
+        version: '1.3.0',
+        attribution: 'Institut Cartogràfic i Geològic de Catalunya',
+        format: 'image/png'
+      };
+      const map = useMap()
+  
+      // Add WMS source/layers
+      const source = WMS.source(
+          'https://geoserveis.icgc.cat/arcgis/services/geologic/icgc_mg50m/MapServer/WMSServer?',
+          options
+      );
+      
+      source.getLayer('UGEO_PA').addTo(map)
+      
+      return null;
+      }
+
     return (
     <>
       {/* <h2>Hello {user.userdata.username}</h2> */}
@@ -279,6 +294,7 @@ function Home (user){
               className="input"
               value={formData.title}
               onChange={handleChange}
+              required
             />
             <br />
             <label>Descripció</label>
@@ -310,19 +326,32 @@ function Home (user){
       {/* <pre className="text-left">{JSON.stringify(mapPoint, 0, 2)}</pre> */}
       <MapContainer center={center}
          zoom={8} scrollWheelZoom={true}>
+        <LayersControl position="topright">
         {/* osm leaflet default */}
-        {/* <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        /> */}
+        <BaseLayer checked name="Topogràfic">
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          /> 
+        </BaseLayer>
+        <BaseLayer name="Ortofoto">
         <TileLayer 
           url={osm.maptiler.url} attribution={osm.maptiler.attribution} 
         />
+        </BaseLayer>
+        <BaseLayer name="Geològic">
+        <TileLayer 
+          url={'https://tilemaps.icgc.cat/mapfactory/wmts/geologia/MON3857NW/{z}/{x}/{y}.png'} attribution={'ICGC, Catalunya'} 
+        />
+        </BaseLayer>
+        </LayersControl>
         {location.loaded && !location.error && (
           <Marker position={[location.coordinates.lat, location.coordinates.lng]} icon={markerIcon}>
             <Popup>
+              <div className='my-position'>
               <p>La Meva Posició</p>
               <p>Latitud: {location.coordinates.lat} Longitud:{location.coordinates.lng}</p>
+              </div>
             </Popup>
           </Marker>
         )}
@@ -348,11 +377,14 @@ function Home (user){
           > 
           <Popup>
           <div>
-            <h2>{position.properties.title}</h2>
-            <img src={position.properties.urlImg} width="320"/> 
-            <p>{position.properties.description}</p>
-            <p>{position.properties.date}</p>
-            <p>Lat: {position.properties.lat}, Long: {position.properties.long}</p>
+            <Link to={'/position/' + position.properties.id}>
+              <h2 className='title-popup'>{position.properties.title}</h2>
+            </Link>
+            <hr style={{margin:'3px', marginBottom:'22px'}} />
+            <img className='img-popup' src={position.properties.urlImg} width="300"/> 
+            <p className='descr-popup'>{position.properties.description}</p>
+            <p className='date-popup'>{position.properties.date}</p>
+            <p className='coords-popup'>Lat: {parseFloat(position.properties.lat).toFixed(5)}, Long: {parseFloat(position.properties.long).toFixed(5)}</p>
             
           </div>
         </Popup>
@@ -361,16 +393,26 @@ function Home (user){
         }
         <MyComponent />
       </MapContainer>
-      {"lat" in mousePosition && <> 
-      <p>Lat: {mousePosition.lat.toFixed(5)}, Long: {mousePosition.lng.toFixed(5)}</p><br /><br />
+      {"lat" in mousePosition && 
+      <> 
+      <p className='coords-map'>Lat: {mousePosition.lat.toFixed(5)}, Long: {mousePosition.lng.toFixed(5)}</p><br /><br />
       </>}
 
+      <div className="col-lg-8 col-md-10 mx-auto">
+      <br />
+      <hr />
+      </div>
       {location.loaded && !location.error && (
           data.features.map(position => (
-          <div className='post-preview' key={position.properties.id}>
-            <a href={'/position/' + position.properties.id}><h2 className='post-title'>{position.properties.title}</h2></a>
-            <h3 className='post-subtitle'>{position.properties.description}</h3>
-            <p className='post-meta'>{position.properties.date}</p>
+          <div className='post-preview col-lg-8 col-md-10 mx-auto' key={position.properties.id}>
+            <div className='post-preview-img'>
+            {/* <a href={'/position/' + position.properties.id}> Nooooo! react!!!*/}
+            <Link to={'/position/' + position.properties.id}>
+              <h3 className='post-title'>{position.properties.title}</h3>
+            </Link>  
+            <h5 className='post-subtitle'>{position.properties.description}</h5>
+            </div>
+            <p className='post-meta'>Creat al {position.properties.date}</p>
             <hr />
           </div>
           
