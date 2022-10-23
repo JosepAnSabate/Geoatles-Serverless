@@ -2,7 +2,7 @@ import React from 'react';
 import {useNavigate, Link} from 'react-router-dom';
 import ReactDOMServer from "react-dom/server";
 import * as AWS from 'aws-sdk'
-import { uploadFile } from 'react-s3';
+//import { uploadFile } from 'react-s3';
 import {MapContainer, TileLayer, Marker, Popup, FeatureGroup, useMapEvents, LayersControl, useMap } from 'react-leaflet';
 import * as WMS from "leaflet.wms";
 import {EditControl} from 'react-leaflet-draw';
@@ -13,6 +13,7 @@ import "./home.css";
 import osm from '../osm-provider';
 import * as L from 'leaflet';
 import "leaflet-draw/dist/leaflet.draw.css"
+import $ from 'jquery';
 
 import post from "../clients/HttpClient";
 // hooks
@@ -21,8 +22,9 @@ import useGeoLocation from '../hooks/useGeoLocation';
 
 // utils
 //import { mapForm } from '../utils/mapForm.js';
-import { AlertSuccess } from '../utils/AlertSuccess';
-//import {buildGeoJSON} from '../utils/buildGeoJson.js';
+// components
+import CustomWMSLayer from '../components/customwmslayer.jsx';
+
 
 const { BaseLayer } = LayersControl;
 
@@ -72,7 +74,8 @@ function Home (user){
     
     const [center, setCenter] = useState({lat: 41.505, lng: 1.834});
     // user location
-    const location = useGeoLocation();
+    let location = useGeoLocation();  // REVISAR!!!
+    //console.log('location', location);
 
     //console.log('items', positions.Items);
     //console.log('items 0', positions.Items[0].location);
@@ -210,11 +213,11 @@ function Home (user){
     // react leaflet post
     const [mapPoint, setMapPoint] = useState([]);
     const _onCreated = (e) => {
-      console.log('created', e);
+      //console.log('created', e);
       const {layerType, layer} = e;
 
       const {_leaflet_id } = layer;
-      console.log('ltlng', layer._latlng);
+      //console.log('ltlng', layer._latlng);
       const {lat, lng} = layer._latlng;
       // setMapPoint(layers => [...layers, {id: _leaflet_id, latlngs: layer._latlng} ]);
       setMapPoint({id: _leaflet_id, latlngs: layer._latlng});
@@ -234,52 +237,63 @@ function Home (user){
       // }
     }
 
-    const _onEdited = (e) => {
-      console.log('edited', e);
-    }
-
+    // const _onEdited = (e) => {
+    //   console.log('edited', e);
+    // }
+    // close form
     const _onDeleted = (e) => {
-      console.log('deleted', e);
+      //console.log('deleted', e);
       setShowForm(false);
     }
 
     // track coordinates
     const [mousePosition, setMousePosition] = useState({});
-    function MyComponent() {
-      const map = useMapEvents({
-        mousemove: (e) => {
-          const { lat, lng } = e.latlng;
-          //console.log('latlng', lat, lng);
-          setMousePosition({lat,lng});
-        }
-      });
-      return null;
-    }
+    //  function MouseMoveCoordinates() {
+    //     const map  = useMapEvents({
+    //       mousemove: (e) => {
+    //       const { lat, lng } = e.latlng;
+    // //       //console.log('latlng', lat, lng);
+    //        setMousePosition({lat,lng});
+    //       }
+    //     });
+    //     return null;
+    //   }
     //console.log('mousePosition', mousePosition);
-
-    // wms
-    function GetFeatureInfoWms() {
-      const options = {
-        maxZoom: 7, // pèr a no mostrarse
-        transparent: true,
-        continuousWorld: true,
-        version: '1.3.0',
-        attribution: 'Institut Cartogràfic i Geològic de Catalunya',
-        format: 'image/png'
-      };
+    // getFeatureInfo
+    const [getInfo, setGetInfo] = useState(false);
+    function GetFeatureInfo(props) {
+      const { url, options,layers } = props;
       const map = useMap()
-  
-      // Add WMS source/layers
-      const source = WMS.source(
-          'https://geoserveis.icgc.cat/arcgis/services/geologic/icgc_mg50m/MapServer/WMSServer?',
-          options
-      );
-      
-      source.getLayer('UGEO_PA').addTo(map)
-      
-      return null;
-      }
 
+      useEffect(() => {
+        let MySourceWMS = WMS.Source.extend({
+            ajax: function (url, callback) {
+              $.ajax(url, {
+                context: this,
+                success: function (result) {
+                  callback.call(this, result);
+                },
+              });
+            },
+            showFeatureInfo: function (latlng, info) {
+              setGetInfo(info);
+              //console.log('latlng', latlng);
+              //$('.geologicDescription').text(info);
+              // const { lat, lng } = latlng;
+              // setMousePosition({lat,lng});
+            },
+            onRemove: function() {
+              let evitabug = 3;
+          },       
+          });
+        new MySourceWMS(url, options).getLayer(layers).addTo(map);
+      }, [])
+     
+    //console.log("getInfo",typeof getInfo, getInfo);
+    return null;
+    }
+    
+    
     return (
     <>
       {/* <h2>Hello {user.userdata.username}</h2> */}
@@ -287,7 +301,7 @@ function Home (user){
         <div className="create-form">
           <form onSubmit={handleSubmit} className="form">
           <button type="button" onClick={_onDeleted} style={{float: "right", paddingTop: "8px"}} className="btn-close" aria-label="Close"></button>
-            <label style={{paddingTop: "8px"}}>Títol</label>  
+            <label className='label-form' style={{paddingTop: "8px"}}>Títol</label>  
             <input
               type="text"
               name="title"  
@@ -297,7 +311,7 @@ function Home (user){
               required
             />
             <br />
-            <label>Descripció</label>
+            <label className='label-form'>Descripció</label>
             <textarea
               type="text"
               name="description"
@@ -307,7 +321,7 @@ function Home (user){
               onChange={handleChange}
             />
             <br />
-            <label>Imatge</label>
+            <label className='label-form'>Imatge</label>
             <input
               type="file"
               name="urlImg"
@@ -316,7 +330,7 @@ function Home (user){
              // onChange={handleFileChange}
             />
             <br />
-            <label>Lat: {mapPoint.latlngs.lat.toFixed(5)}, Long: {mapPoint.latlngs.lng.toFixed(5)}</label>
+            <label className='form-coords'>Lat: {mapPoint.latlngs.lat.toFixed(6)}, Long: {mapPoint.latlngs.lng.toFixed(6)}</label>
             <br />
             <button className='button-form' onSubmit={() => handleChange()}>Afegeix Posició</button>
 
@@ -327,7 +341,7 @@ function Home (user){
       <MapContainer center={center}
          zoom={8} scrollWheelZoom={true}>
         <LayersControl position="topright">
-        {/* osm leaflet default */}
+         {/* osm leaflet default   */}
         <BaseLayer checked name="Topogràfic">
           <TileLayer
             attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -335,16 +349,16 @@ function Home (user){
           /> 
         </BaseLayer>
         <BaseLayer name="Ortofoto">
-        <TileLayer 
-          url={osm.maptiler.url} attribution={osm.maptiler.attribution} 
-        />
+          <TileLayer 
+            url={osm.maptiler.url} attribution={osm.maptiler.attribution} 
+          />
         </BaseLayer>
         <BaseLayer name="Geològic">
-        <TileLayer 
-          url={'https://tilemaps.icgc.cat/mapfactory/wmts/geologia/MON3857NW/{z}/{x}/{y}.png'} attribution={'ICGC, Catalunya'} 
-        />
+          <TileLayer 
+            url={'https://tilemaps.icgc.cat/mapfactory/wmts/geologia/MON3857NW/{z}/{x}/{y}.png'} attribution={'ICGC, Catalunya'} 
+          />
         </BaseLayer>
-        </LayersControl>
+        </LayersControl> 
         {location.loaded && !location.error && (
           <Marker position={[location.coordinates.lat, location.coordinates.lng]} icon={markerIcon}>
             <Popup>
@@ -390,14 +404,78 @@ function Home (user){
         </Popup>
         </Marker>
           ))
-        }
-        <MyComponent />
+        } 
+        {/* <MouseMoveCoordinates />  */}
+        {/* <CustomWMSLayerOutside /> */}
+        {/* GETFEATURESINFO https://github.com/heigeo/leaflet.wms
+        EXEMPLE https://stackblitz.com/edit/react-7nhob4?file=package.json,CustomWMSLayer.js,index.js
+        */}
+        {/* <CustomWMSLayer
+        setGetInfo={setGetInfo}
+        layers={['UGEO_PA']}
+        options={{
+          "format": "image/png",
+          "transparent": "true",
+          "info_format": "text/plain",
+        }}
+        url="https://geoserveis.icgc.cat/arcgis/services/geologic/icgc_mg50m/MapServer/WMSServer"
+      />    */}
+      <GetFeatureInfo 
+        layers={['UGEO_PA']}
+        options={{
+          "format": "image/png",
+          "transparent": "true",
+          "info_format": "text/plain",
+        }}
+        url="https://geoserveis.icgc.cat/arcgis/services/geologic/icgc_mg50m/MapServer/WMSServer"
+      />  
       </MapContainer>
-      {"lat" in mousePosition && 
+      {/* {"lat" in mousePosition && 
       <> 
       <p className='coords-map'>Lat: {mousePosition.lat.toFixed(5)}, Long: {mousePosition.lng.toFixed(5)}</p><br /><br />
-      </>}
-
+      </>} */}
+      {/* <pre className="geologicDescription" id="geologicDescription">Clica al mapa per obtenir descripcions litològiques.</pre> */}
+        {/* https://geoserveis.icgc.cat/arcgis/services/geologic/icgc_mg50m/MapServer/WMSServer?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetFeatureInfo&LAYERS=UGEO_PA&SRS=EPSG%3A4326&BBOX=-0.010939%2C40.315513%2C3.502894%2C43.069009&WIDTH=256&HEIGHT=256&QUERY_LAYERS=UGEO_PA&X=100&Y=100&INFO_FORMAT=text%2Fplain */}
+      {getInfo ? (
+      <>
+      <br />
+      <table className="table">
+        <tbody>
+          <tr>
+            <th scope="row" className='left-table'>Codi:</th>
+            <td className="leftTabEl">{getInfo.split(';')[12]}</td>
+          </tr>
+          <tr>
+            <th className='left-table' scope="row">Classificació litològica: </th>
+            <td className="leftTabEl">{getInfo.split(';')[13]}</td>
+          </tr>
+          <tr>
+          <th className='left-table' scope="row">Descripció: </th>
+          <td className="leftTabEl">{getInfo.split(';')[14]}</td>
+        </tr>
+        <tr>
+          <th className='left-table' scope="row">Època: </th>
+          <td className="leftTabEl">{getInfo.split(';')[15]}</td>
+        </tr>
+        <tr>
+          <th className='left-table' scope="row">Era: </th>
+          <td className="leftTabEl">{getInfo.split(';')[16]}</td>
+        </tr>
+        <tr>
+          <th className='left-table' scope="row">Període: </th>
+          <td className="leftTabEl">{getInfo.split(';')[17]}</td>
+        </tr>
+        </tbody>
+      </table>
+      </>
+      ) : 
+      <>
+      <p className='coords-map'>Clica al mapa per obtenir la descripció litològica.</p>
+      <p className='coords-map'>Clica a &nbsp;
+        <img className='img-popup' src={'https://geoatles-serverless-images.s3.eu-west-1.amazonaws.com/Captura.PNG'} width="40"/> 
+        &nbsp; per a crear una nova posició.</p>
+      </>
+      } 
       <div className="col-lg-8 col-md-10 mx-auto">
       <br />
       <hr />
@@ -412,11 +490,10 @@ function Home (user){
             </Link>  
             <h5 className='post-subtitle'>{position.properties.description}</h5>
             </div>
-            <p className='post-meta'>Creat al {position.properties.date}</p>
+            <p className='post-meta date-format'>Creat al {position.properties.date}</p>
             <hr />
           </div>
-          
-            ))
+          ))
         )}
     </>
     )

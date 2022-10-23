@@ -61,7 +61,7 @@
     display: block;
     position: relative;
     margin: 0px auto;
-    width: 40%;
+    width: 90%;
     min-width: 350px;
     padding: 5px;
     border: none;
@@ -111,6 +111,7 @@
 }
 .post-meta{
     text-align: right;
+    margin-right: 20px;
 }
 .post-subtitle{
     margin-left: 30px;
@@ -119,4 +120,34 @@
     font-size: 1.1rem;
     font-family: 'PT Serif', serif;
     text-align: center;
+}
+.left-table{
+    text-align: center;
+    font-size: 1.1rem;
+    font-family: 'PT Serif', serif;
+    font-style: italic;
+}
+.leftTabEl{
+    font-size: 1.1rem;
+    font-family: 'PT Serif', serif;
+    font-style: italic;
+}
+.post-preview-img{
+    margin-left: 20px;
+    margin-right: 20px;
+}
+.form-coords{
+    font-size: 1.2rem;
+    font-family: 'PT Serif', serif;
+    font-style: italic;
+    text-align: center !important;
+}
+.label-form{
+    font-weight: 400;
+    font-size: 1.1rem;
+    font-family: 'PT Serif', serif;
+}
+
+.date-format{
+    font-family: 'PT Serif', serif;
 }

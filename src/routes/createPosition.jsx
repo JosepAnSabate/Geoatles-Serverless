@@ -140,14 +140,14 @@ function CreatePosition (){
 
     return (
       <>
-      <br /> <br /><br /> 
+      <br /> <br />
       <div className='create'>
       <AlertSuccess success={formSuccess} />
       
       <h3>Crea una Posició</h3>
-      <br />
+      <br /><br /> 
       <form onSubmit={handleSubmit} className="form">
-        <label>Títol</label>
+        <label className='label-form'>Títol</label>
         <input  
             type="text" 
             name="title" 
@@ -157,7 +157,7 @@ function CreatePosition (){
             required 
         /> 
         <br />
-        <label>Descripció</label>
+        <label className='label-form'>Descripció</label>
         <textarea
             rows="2"  
             type="text" 
@@ -168,10 +168,10 @@ function CreatePosition (){
             required 
         /> 
         <br />
-        <label>Imatge</label>
+        <label className='label-form'>Imatge</label>
         <input type="file" name="file"  onChange={handleFileInput}></input>
         <br />
-        <label className="label-forms">Coordenades</label>
+        <label className="label-forms label-form">Coordenades</label>
                 <input  
                     type="text" 
                     name="long" 

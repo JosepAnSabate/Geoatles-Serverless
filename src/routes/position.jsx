@@ -100,7 +100,7 @@ function Position (user){
               style={{float: "right", paddingTop: "8px"}} 
               className="btn-close" aria-label="Close"
             ></button>
-            <label style={{paddingTop: "8px"}}>Nou Títol</label>  
+            <label className='label-form' style={{paddingTop: "8px"}}>Nou Títol</label>  
             <input
               type="text"
               name="title"  
@@ -110,7 +110,7 @@ function Position (user){
               required
             />
             <br />
-            <label>Nova Descripció</label>
+            <label className='label-form'>Nova Descripció</label>
             <textarea
               type="text"
               name="description"
