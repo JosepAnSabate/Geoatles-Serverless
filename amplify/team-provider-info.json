@@ -20,6 +20,12 @@
           "deploymentBucketName": "amplify-geoatlesserverless-dev-192346-deployment",
           "s3Key": "amplify-builds/geoatlesmypostions-593430616c6479775141-build.zip"
         }
+      },
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "df7aop33t3gtd",
+          "type": "manual"
+        }
       }
     }
   }
