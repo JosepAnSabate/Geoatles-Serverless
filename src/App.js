@@ -33,7 +33,7 @@ function App({ user }) {
       <Route path="/about" element={<About   />} />
       <Route path="/position/:id" element={<Position   userdata={user} />} />
       <Route path="/create_position" element={<CreatePosition />} />
-      {/* error pages */}
+      {/* error pages. */}
       <Route path="*" element={<Error   />} />
     </Routes>
     </div>
