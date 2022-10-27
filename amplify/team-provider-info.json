@@ -26,6 +26,9 @@
           "appId": "df7aop33t3gtd",
           "type": "manual"
         }
+      },
+      "api": {
+        "geoatlesapi": {}
       }
     }
   }

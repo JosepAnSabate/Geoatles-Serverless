@@ -10,6 +10,14 @@ export type AmplifyDependentResourcesAttributes = {
             "AppClientID": "string"
         }
     },
+    "function": {
+        "geoatlesmypostions": {
+            "Name": "string",
+            "Arn": "string",
+            "Region": "string",
+            "LambdaExecutionRole": "string"
+        }
+    },
     "api": {
         "geoatlesapi": {
             "RootUrl": "string",
